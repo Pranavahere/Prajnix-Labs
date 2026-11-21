@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { computeAnalytics } = require('./analytics');
 
 const app = express();
 const server = http.createServer(app);
@@ -593,6 +594,20 @@ app.delete('/api/sessions/:pin', async (req, res) => {
 });
 
 // 10. Export CSV Report
+// Analytics for the host dashboard. Unlike verifyHostAuth, this REQUIRES a
+// valid host token: the data is aggregated and anonymised, but it is still
+// host-only, and a missing token should not grant access here.
+app.get('/api/sessions/:pin/analytics', (req, res) => {
+  const session = sessions.get(String(req.params.pin || '').trim());
+  if (!session) return res.status(404).json({ error: 'Session not found' });
+
+  const token = req.headers['x-host-token'] || req.query?.key;
+  if (!token || token !== session.hostToken) {
+    return res.status(403).json({ error: 'Host token required' });
+  }
+  res.json(computeAnalytics(session));
+});
+
 app.get('/api/sessions/:pin/export-csv', (req, res) => {
   const pin = String(req.params.pin || '').trim();
   const session = sessions.get(pin);

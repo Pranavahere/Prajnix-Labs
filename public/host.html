@@ -16,6 +16,7 @@
     };
   </script>
   <script src="/socket.io/socket.io.js"></script>
+  <script src="/analytics-ui.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <style>
@@ -279,6 +280,10 @@
               👁️ Hide Results
             </button>
 
+            <button id="openAnalyticsBtn" title="See charts and insights from the audience's votes" class="px-2.5 py-2 text-xs font-bold rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/20 cursor-pointer transition">
+              📈 Analytics
+            </button>
+
             <!-- Quiz Winner Podium Button -->
             <button onclick="openPodiumModal()" title="Show Quiz Leaderboard Podium" class="px-2.5 py-2 text-xs font-bold rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 hover:bg-amber-500/20 cursor-pointer transition">
               🏆 Podium
@@ -323,6 +328,18 @@
         <button id="saveDeckBtn" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold rounded-xl shadow-lg cursor-pointer">Save All Changes ✓</button>
       </div>
     </div>
+  </div>
+
+  <!-- VIEW 4: SESSION ANALYTICS -->
+  <div id="analyticsView" class="hidden flex-grow w-full max-w-5xl mx-auto p-4 sm:p-8 space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">📈 Session Analytics</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Anonymous, aggregated results. Refreshes every few seconds. <span id="analyticsUpdatedAt"></span></p>
+      </div>
+      <button id="closeAnalyticsBtn" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 cursor-pointer">← Back to Stage</button>
+    </div>
+    <div id="analyticsBody" class="space-y-4"></div>
   </div>
 
   <!-- QUIZ LEADERBOARD PODIUM MODAL -->
@@ -927,6 +944,7 @@
 
     function returnToHub() {
       currentSession = null;
+      closeAnalytics();
       document.getElementById('stageView').classList.add('hidden');
       document.getElementById('editorView').classList.add('hidden');
       document.getElementById('activeHeader').classList.add('hidden');
@@ -1072,6 +1090,22 @@
     });
     document.getElementById('closeEditorBtn').addEventListener('click', () => {
       document.getElementById('editorView').classList.add('hidden');
+      document.getElementById('stageView').classList.remove('hidden');
+    });
+
+    // Analytics tab (rendering lives in /analytics-ui.js)
+    document.getElementById('openAnalyticsBtn').addEventListener('click', () => {
+      if (!currentSession) return;
+      document.getElementById('stageView').classList.add('hidden');
+      document.getElementById('analyticsView').classList.remove('hidden');
+      AnalyticsUI.start(currentSession.pin, activeHostToken);
+    });
+    function closeAnalytics() {
+      AnalyticsUI.stop();
+      document.getElementById('analyticsView').classList.add('hidden');
+    }
+    document.getElementById('closeAnalyticsBtn').addEventListener('click', () => {
+      closeAnalytics();
       document.getElementById('stageView').classList.remove('hidden');
     });
 
